@@ -94,21 +94,30 @@ public class KinematicCharacterMover implements CharacterMover {
         physics = physicsEngine;
     }
 
+    /**
+     * Method is called by the Client or Server CharacterPredictionSystem
+     * @param initial The initial state to start from
+     * @param input   The input driving the movement change
+     * @param entity  The character
+     * @return
+     */
     @Override
     public CharacterStateEvent step(CharacterStateEvent initial, CharacterMoveInputEvent input, EntityRef entity) {
         CharacterMovementComponent characterMovementComponent = entity.getComponent(CharacterMovementComponent.class);
         CharacterStateEvent result = new CharacterStateEvent(initial);
         result.setSequenceNumber(input.getSequenceNumber());
+        // If the block at current position is active
         if (worldProvider.isBlockRelevant(initial.getPosition())) {
+            // Updates position of result
             updatePosition(characterMovementComponent, result, input, entity);
-
+            // Checks if the input has already been dealt with (?)
             if (input.isFirstRun()) {
                 checkBlockEntry(entity,
                         new Vector3i(initial.getPosition(), RoundingMode.HALF_UP),
                         new Vector3i(result.getPosition(), RoundingMode.HALF_UP),
                         characterMovementComponent.height);
             }
-
+            // Updates mode at each step
             if (result.getMode() != MovementMode.GHOSTING && result.getMode() != MovementMode.NONE) {
                 checkMode(characterMovementComponent, result, initial, entity, input.isFirstRun());
             }
@@ -117,6 +126,7 @@ public class KinematicCharacterMover implements CharacterMover {
         updateRotation(characterMovementComponent, result, input);
         result.setPitch(input.getPitch());
         result.setYaw(input.getYaw());
+        // Finishes/Consumes that input (?)
         input.runComplete();
         return result;
     }
@@ -129,6 +139,7 @@ public class KinematicCharacterMover implements CharacterMover {
 
     /*
     * Figure out if our position has put us into a new set of blocks and fire the appropriate events.
+    * Sends OnEnterBlockEvent for every block entered/left
     */
     private void checkBlockEntry(EntityRef entity, Vector3i oldPosition, Vector3i newPosition, float characterHeight) {
         // TODO: This will only work for tall mobs/players and single block mobs
@@ -549,6 +560,10 @@ public class KinematicCharacterMover implements CharacterMover {
         return riseAmount;
     }
 
+    /*
+     * Method called by step. In turn calls walk for all
+     * movement modes other than NONE
+     */
     private void updatePosition(final CharacterMovementComponent movementComp, final CharacterStateEvent state,
                                 CharacterMoveInputEvent input, EntityRef entity) {
         switch (state.getMode()) {
@@ -572,6 +587,9 @@ public class KinematicCharacterMover implements CharacterMover {
         }
     }
 
+    /*
+     * Method called by updatePosition which is called by step
+     */
     private void walk(final CharacterMovementComponent movementComp, final CharacterStateEvent state,
                       CharacterMoveInputEvent input, EntityRef entity) {
         Vector3f desiredVelocity = new Vector3f(input.getMovementDirection());
