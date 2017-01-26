@@ -87,6 +87,8 @@ configurations.all {
 
 // Primary dependencies definition
 dependencies {
+    // REST API
+    compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.14'
 
     // Storage and networking
     compile group: 'com.google.guava', name: 'guava', version: '19.0'
